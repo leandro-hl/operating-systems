@@ -1,28 +1,55 @@
-export class Process {
-  name: string;
-  arrival: number;
-  state: State;
-  operation: Operation;
+import { Monitor } from "./monitor";
+import { Monitoreable } from "./monitoreable";
 
-  private _burntQuantum: number;
+export class Process extends Monitoreable {
+  private _name: string;
+  private _arrival: number;
+  private _state: State;
+  private _service: number = 0;
+  private _done: number = 0;
+
+  constructor(p: { monitor: Monitor; name: string; arrival: number; service: number }) {
+    super(p.monitor);
+    this._name = p.name;
+    this._arrival = p.arrival;
+    this._service = p.service;
+    this._state = State.Ready;
+  }
+
+  setExecuting() {
+    this._state = State.Executing;
+  }
+
+  setReady() {
+    this._state = State.Ready;
+  }
+
+  setFinished() {
+    this._state = State.Done;
+  }
 
   exec() {
-    console.log(this.name);
-    this._burntQuantum++;
-    this.operation.done++;
-    this.state = State.Executing;
+    this._monitor.add(this._name);
+    this._done++;
   }
 
-  reachedQuantumLimit(quantumLimit: number) {
-    const reached = this._burntQuantum == quantumLimit;
-
-    if (reached) {
-      this._burntQuantum = 0;
-      this.state = this.operation.isDone() ? State.Done : State.Ready;
-    }
-
-    return reached;
+  arrivesAt(t: number) {
+    return this._arrival == t;
   }
+
+  getArrival() {
+    return this._arrival;
+  }
+
+  hasFinished() {
+    return this._done == this._service;
+  }
+}
+
+export enum State {
+  Ready,
+  Executing,
+  Done
 }
 
 export class Operation {
@@ -38,10 +65,4 @@ export class Operation {
 export enum OperationType {
   CPU,
   IO
-}
-
-export enum State {
-  Ready,
-  Executing,
-  Done
 }
